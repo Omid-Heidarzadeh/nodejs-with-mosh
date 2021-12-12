@@ -1,0 +1,43 @@
+{
+  "name": "vidly",
+  "version": "1.0.0",
+  "description": "vidly fictional video rental platform",
+  "main": "index.js",
+  "scripts": {
+    "start": "set app_password='12234' && nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "video",
+    "rental"
+  ],
+  "author": "Omid Heidarzadeh",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^8.2.0",
+    "jest": "^27.3.1",
+    "supertest": "^6.1.6"
+  },
+  "dependencies": {
+    "@mapbox/node-pre-gyp": "^1.0.6",
+    "bcrypt": "^5.0.1",
+    "bcryptjs": "^2.4.3",
+    "config": "^3.3.6",
+    "debug": "^4.3.2",
+    "express": "^4.17.1",
+    "express-async-errors": "^3.1.1",
+    "fawn": "^2.1.5",
+    "helmet": "^4.6.0",
+    "joi": "^17.4.2",
+    "joi-objectid": "^4.0.2",
+    "jsonwebtoken": "^8.5.1",
+    "lodash": "^4.17.21",
+    "moment": "^2.29.1",
+    "mongoose": "^6.0.13",
+    "morgan": "^1.10.0",
+    "node-pre-gyp": "^0.17.0",
+    "pug": "^3.0.2",
+    "winston": "^3.3.3",
+    "winston-mongodb": "^5.0.7"
+  }
+}

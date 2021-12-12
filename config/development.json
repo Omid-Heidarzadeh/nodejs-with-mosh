@@ -1,0 +1,12 @@
+{
+  "name": "First express app - development",
+  "db": {
+    "root": "mongodb://127.0.0.1:27017",
+    "genre": {
+      "path": "/vidly"
+    }
+  },
+  "mail": {
+    "host": "dev-mail-server"
+  }
+}

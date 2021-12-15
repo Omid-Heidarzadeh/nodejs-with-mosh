@@ -30,8 +30,12 @@ router.post('/', async (req, res) => {
   const { error } = validate(req);
   if (error) return res.status(404).send(error.details[0].message);
 
-  let movie = await createMovie(req.body);
-  res.send(movie);
+  let created = await createMovie(req.body);
+  if (created.error)
+    return res
+      .status(400)
+      .send(`something goes wrong: ${created.error.message}`);
+  res.send(created.movie);
 });
 
 router.put('/', async (req, res) => {
@@ -49,10 +53,10 @@ router.put('/', async (req, res) => {
   });
   if (movie.error)
     return res.send(404).send('No movie document with the givenID was found.');
-  let updateResult = await updateMovie(movie, req.body);
-  if (updateResult.error)
-    return res.status(500).send(`server internal error: ${updateResult.error}`);
-  return res.send(updateResult.movie);
+  let updated = await updateMovie(movie, req.body);
+  if (updated.error)
+    return res.status(500).send(`server internal error: ${updated.error.message}`);
+  return res.send(updated.movie);
 });
 
 router.delete('/', async (req, res) => {

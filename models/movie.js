@@ -3,9 +3,14 @@ const mongoose = require('mongoose');
 const { genreSchema } = require('./genre');
 
 const movieSchema = new mongoose.Schema({
+  // _id: {
+  //   type: mongoose.Types.ObjectId,
+  //   get: v => v.toString()
+  // },
   title: {
     type: String,
     required: true,
+    trim: true,
     minlength: 1,
     maxlength: 255
   },

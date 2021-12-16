@@ -3,8 +3,9 @@ const express = require('express');
 const router = express.Router();
 const Joi = require('joi');
 const { User } = require('../models/user');
+const asyncMiddleware = require('../middleware/async');
 
-router.post('/', async (req, res) => {
+router.post('/', asyncMiddleware(async (req, res) => {
   let { error } = await validate(req.body);
   if (error) return res.status(400).send(error.details[0].message);
 
@@ -16,7 +17,7 @@ router.post('/', async (req, res) => {
 
   const token = user.genAuthToken()
   res.send(token);
-});
+}));
 
 function validate(request) {
   let schema = {

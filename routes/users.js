@@ -3,13 +3,14 @@ const express = require('express');
 const router = express.Router();
 const { User, validate } = require('../models/user');
 const auth = require('../middleware/auth');
+const asyncMiddleware = require('../middleware/async');
 
-router.get('/me', auth, async (req, res) => {
+router.get('/me', auth, asyncMiddleware(async (req, res) => {
   const user = await User.findById(req.user._id).select('-password -__v');
   res.send(user);
-});
+}));
 
-router.post('/', async (req, res) => {
+router.post('/', asyncMiddleware(async (req, res) => {
   let { error } = validate(req);
   if (error) return res.status(400).send(error.details[0].message);
 
@@ -28,6 +29,6 @@ router.post('/', async (req, res) => {
   const token = user.genAuthToken();
   user = { name: user.name, email: user.email };
   res.header('x-auth-token', token).send(user);
-});
+}));
 
 module.exports = router;

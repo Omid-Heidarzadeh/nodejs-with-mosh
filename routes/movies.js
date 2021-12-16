@@ -4,8 +4,9 @@ const mongoose = require('mongoose');
 const { Movie, generateQuery, validate } = require('../models/movie');
 const { Genre } = require('../models/genre');
 const auth = require('../middleware/auth');
+const asyncMiddleware = require('../middleware/async');
 
-router.get('/', async (req, res) => {
+router.get('/', asyncMiddleware(async (req, res) => {
   const { error } = validate(req);
   if (error) return res.status(400).send(error.details[0].message);
 
@@ -21,9 +22,9 @@ router.get('/', async (req, res) => {
       .status(404)
       .send('The requested movie with given ID was not found.');
   res.send(movie);
-});
+}));
 
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, asyncMiddleware(async (req, res) => {
   const result = await makeListOfGenres(req.body.genres);
   if (result.error) return res.status(result.status).send(result.error);
   req.body.genres = result.list;
@@ -37,9 +38,9 @@ router.post('/', auth, async (req, res) => {
       .status(400)
       .send(`something goes wrong: ${created.error.message}`);
   res.send(created.movie);
-});
+}));
 
-router.put('/', auth, async (req, res) => {
+router.put('/', auth, asyncMiddleware(async (req, res) => {
   if (req.body?.genres?.length > 0) {
     const result = await makeListOfGenres(req.body.genres);
     if (result.error) return res.status(result.status).send(result.error);
@@ -58,9 +59,9 @@ router.put('/', auth, async (req, res) => {
   if (updated.error)
     return res.status(500).send(`server internal error: ${updated.error.message}`);
   return res.send(updated.movie);
-});
+}));
 
-router.delete('/', auth, async (req, res) => {
+router.delete('/', auth, asyncMiddleware(async (req, res) => {
   const { error } = validate(req);
   if (error) return res.status(400).send(error.details[0].message);
   let result = await Movie.findByIdAndRemove(req.body.id)
@@ -73,7 +74,7 @@ router.delete('/', auth, async (req, res) => {
   if (result.error)
     return res.status(500).send(`Internal server error: ${result.error}`);
   res.send(result.movie);
-});
+}));
 
 async function createMovie({ title, genres, numberInStock, dailyRentalRate }) {
   let movie = new Movie({

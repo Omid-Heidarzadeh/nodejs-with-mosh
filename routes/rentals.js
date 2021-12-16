@@ -4,8 +4,9 @@ const { Movie } = require('../models/movie');
 const { Rental, validate } = require('../models/rental');
 const router = express.Router();
 const auth = require('../middleware/auth');
+const asyncMiddleware = require('../middleware/async');
 
-router.get('/', auth, async (req, res) => {
+router.get('/', auth, asyncMiddleware(async (req, res) => {
   if (!Object.keys(req.query).length) {
     let rentals = await Rental.find();
     return res.send(rentals);
@@ -54,7 +55,7 @@ router.get('/', auth, async (req, res) => {
       .send(`Somthing goes wrong: ${rentals.error.message}`);
 
   res.send(rentals);
-});
+}));
 
 function getDate(input) {
   let pattern = /^\d{4}-\d{1,2}-\d{1,2}/g;
@@ -65,7 +66,7 @@ function getDate(input) {
   } else return null;
 }
 
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, asyncMiddleware(async (req, res) => {
   let { error } = validate(req);
   if (error) return res.status(400).send(error.details[0].message);
 
@@ -120,7 +121,7 @@ router.post('/', auth, async (req, res) => {
   }
 
   res.send(result);
-});
+}));
 
 function checkMoviesStock(movies) {
   let outOfStock = [];

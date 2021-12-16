@@ -2,5 +2,6 @@
   "name": "First express app - development",
   "mail": {
     "host": "dev-mail-server"
-  }
+  },
+  "jwtPrivateKey": ""
 }

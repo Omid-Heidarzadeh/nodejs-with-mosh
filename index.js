@@ -15,6 +15,11 @@ const express = require("express");
 const app = express();
 const mongoose = require('mongoose');
 
+if (!config.get('jwtPrivateKey')) {
+  console.error('FATAL ERROR: envitonment variable "jwtPrivateKey" is not defined.');
+  process.exit(1);
+}
+
 mongoose.connect('mongodb://127.0.0.1:27017/vidly')
   .then(() => dbDebug('Connected to MongoDB...'))
   .catch((err) => dbDebug(`Could not connect to MongoDB: ${err}`));
@@ -44,12 +49,12 @@ startupDebug('app started...');
 dbDebug('connected to the DB...');
 
 //configuration
-console.log(`App name: ${config.get('name')}`);
-console.log(`Mail password: ${config.get('mail.password')}`);
+// console.log(`App name: ${config.get('name')}`);
+// console.log(`Mail password: ${config.get('mail.password')}`);
 
 //environment variables
-console.log(process.env.NODE_ENV);
-console.log(app.get('env'));
+// console.log(process.env.NODE_ENV);
+// console.log(app.get('env'));
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`Listening to port ${port}...`));

@@ -1,3 +1,4 @@
+const winston = require('winston');
 const startupDebug = require('debug')('app:startup');
 const dbDebug = require('debug')('app:db');
 const morgan = require('morgan');
@@ -15,6 +16,8 @@ const error = require('./middleware/error');
 const express = require("express");
 const app = express();
 const mongoose = require('mongoose');
+
+winston.add(new winston.transports.File({filename: 'logger.log'}));
 
 if (!config.get('jwtPrivateKey')) {
   console.error('FATAL ERROR: envitonment variable "jwtPrivateKey" is not defined.');
@@ -37,7 +40,7 @@ app.use('/api/rentals', rentals);
 app.use('/api/users', users);
 app.use('/api/auth', auth);
 app.use(error);
-app.set('view engine', 'pug');
+// app.set('view engine', 'pug');
 
 
 //morgan logger

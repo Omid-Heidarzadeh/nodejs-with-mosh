@@ -14,22 +14,32 @@ const rentals = require('./routes/rentals');
 const users = require('./routes/users');
 const auth = require('./routes/auth.js');
 const error = require('./middleware/error');
-const express = require("express");
+const express = require('express');
 const app = express();
 const mongoose = require('mongoose');
 
-winston.add(new winston.transports.File({filename: 'logger.log'}));
-winston.add(new winston.transports.MongoDB({
-  db: 'mongodb://127.0.0.1:27017/vidly',
-  level: 'info'
-}))
+winston.add(new winston.transports.File({ filename: 'logger.log' }));
+winston.add(
+  new winston.transports.MongoDB({
+    db: 'mongodb://127.0.0.1:27017/vidly',
+    level: 'info'
+  })
+);
+
+process.on('uncaughtException', (ex) => {
+  console.log('custom', ex);
+  winston.log('error', ex);
+});
 
 if (!config.get('jwtPrivateKey')) {
-  console.error('FATAL ERROR: envitonment variable "jwtPrivateKey" is not defined.');
+  console.error(
+    'FATAL ERROR: envitonment variable "jwtPrivateKey" is not defined.'
+  );
   process.exit(1);
 }
 
-mongoose.connect('mongodb://127.0.0.1:27017/vidly')
+mongoose
+  .connect('mongodb://127.0.0.1:27017/vidly')
   .then(() => dbDebug('Connected to MongoDB...'))
   .catch((err) => dbDebug(`Could not connect to MongoDB: ${err}`));
 
@@ -47,14 +57,13 @@ app.use('/api/auth', auth);
 app.use(error);
 // app.set('view engine', 'pug');
 
-
 //morgan logger
 app.use(morgan('tiny'));
 
 //custom logger middleware
 app.use(logger);
 
-//debugging 
+//debugging
 startupDebug('app started...');
 dbDebug('connected to the DB...');
 

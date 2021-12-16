@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { Genre, generateQuery, validate } = require('../models/genre');
 const auth = require('../middleware/auth');
+const admin = require('../middleware/admin');
 
 router.get('/', async (req, res) => {
   if (!Object.keys(req.query).length) {
@@ -21,7 +22,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.post('/', auth, async (req, res) => {
+router.post('/', [auth, admin], async (req, res) => {
   const { body } = req;
   const { error } = validate(req);
   if (error) return res.status(400).send(error.details[0].message);
@@ -36,7 +37,7 @@ router.post('/', auth, async (req, res) => {
     .catch((e) => res.status(400).send(`Bad request: ${e}`));
 });
 
-router.put('/', auth, async (req, res) => {
+router.put('/', [auth, admin], async (req, res) => {
   const { body } = req;
   const { error } = validate(body);
   if (error) return res.status(400).send(error.details[0].message);
@@ -56,7 +57,7 @@ router.put('/', auth, async (req, res) => {
   res.status(200).send(genre);
 });
 
-router.delete('/', auth, async (req, res) => {
+router.delete('/', [auth, admin], async (req, res) => {
   const { body } = req;
   const { error } = validate(body);
   if (error) return res.status(400).send(error.details[0].message);

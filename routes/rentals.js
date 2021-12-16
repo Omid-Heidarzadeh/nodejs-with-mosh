@@ -3,8 +3,9 @@ const { Customer } = require('../models/customer');
 const { Movie } = require('../models/movie');
 const { Rental, validate } = require('../models/rental');
 const router = express.Router();
+const auth = require('../middleware/auth');
 
-router.get('/', async (req, res) => {
+router.get('/', auth, async (req, res) => {
   if (!Object.keys(req.query).length) {
     let rentals = await Rental.find();
     return res.send(rentals);
@@ -64,7 +65,7 @@ function getDate(input) {
   } else return null;
 }
 
-router.post('/', async (req, res) => {
+router.post('/', auth, async (req, res) => {
   let { error } = validate(req);
   if (error) return res.status(400).send(error.details[0].message);
 

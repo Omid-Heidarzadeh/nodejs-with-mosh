@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { Customer, generateQuery, validate } = require('../models/customer');
+const auth = require('../middleware/auth');
 
 router.get('/', async (req, res) => {
   const { error } = validate(req);
@@ -16,7 +17,7 @@ router.get('/', async (req, res) => {
   res.send(customer);
 });
 
-router.post('/', async (req, res) => {
+router.post('/', auth, async (req, res) => {
   const { error } = validate(req);
   if (error) return res.status(400).send(error.details[0].message);
 
@@ -30,7 +31,7 @@ router.post('/', async (req, res) => {
   res.send(customer);
 });
 
-router.put('/', async (req, res) => {
+router.put('/', auth, async (req, res) => {
   const { error } = validate(req);
   if (error) return res.status(400).send(error.details[0].message);
 
@@ -49,7 +50,7 @@ router.put('/', async (req, res) => {
   res.send(customer);
 });
 
-router.delete('/', async (req, res) => {
+router.delete('/', auth, async (req, res) => {
   const { error } = validate(req);
   if (error) return res.status(400).send(error.details[0].message);
 

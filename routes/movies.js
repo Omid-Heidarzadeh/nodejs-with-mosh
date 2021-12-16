@@ -3,6 +3,7 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const { Movie, generateQuery, validate } = require('../models/movie');
 const { Genre } = require('../models/genre');
+const auth = require('../middleware/auth');
 
 router.get('/', async (req, res) => {
   const { error } = validate(req);
@@ -22,7 +23,7 @@ router.get('/', async (req, res) => {
   res.send(movie);
 });
 
-router.post('/', async (req, res) => {
+router.post('/', auth, async (req, res) => {
   const result = await makeListOfGenres(req.body.genres);
   if (result.error) return res.status(result.status).send(result.error);
   req.body.genres = result.list;
@@ -38,7 +39,7 @@ router.post('/', async (req, res) => {
   res.send(created.movie);
 });
 
-router.put('/', async (req, res) => {
+router.put('/', auth, async (req, res) => {
   if (req.body?.genres?.length > 0) {
     const result = await makeListOfGenres(req.body.genres);
     if (result.error) return res.status(result.status).send(result.error);
@@ -59,7 +60,7 @@ router.put('/', async (req, res) => {
   return res.send(updated.movie);
 });
 
-router.delete('/', async (req, res) => {
+router.delete('/', auth, async (req, res) => {
   const { error } = validate(req);
   if (error) return res.status(400).send(error.details[0].message);
   let result = await Movie.findByIdAndRemove(req.body.id)

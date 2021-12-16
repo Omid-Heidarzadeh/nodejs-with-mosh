@@ -12,7 +12,8 @@ const movieSchema = new mongoose.Schema({
     required: true,
     trim: true,
     minlength: 1,
-    maxlength: 255
+    maxlength: 255,
+    lowercase: true
   },
   genres: {
     type: [genreSchema],
@@ -68,7 +69,7 @@ function validateRequest(request) {
 
   const schema = {
     id: Joi.string().length(24),
-    title: Joi.string().min(1).max(255),
+    title: Joi.string().min(1).max(255).lowercase(),
     genres: Joi.array().optional().custom((arr, helper) => {
       if (!arr.length) return helper.message('Joi: Genres can not be empty.');
       for (let value of arr) {
@@ -85,7 +86,6 @@ function validateRequest(request) {
   if (['PUT', 'DELETE'].includes(method)) schema.id = schema.id.required();
   if (['POST', 'PUT'].includes(method)) schema.title = schema.title.required();
 
-  console.log('Joi movie validation succeed.');
   return Joi.object(schema).validate(toValidate);
 }
 
@@ -93,7 +93,7 @@ function generateQuery(req) {
   let query = {};
   for (let key in req.query) {
     if (movieFields.has(key)) {
-      query[movieFields[key]] = req.query[key];
+      query[movieFields.get(key)] = req.query[key];
     }
   }
   return query;

@@ -1,4 +1,5 @@
 const winston = require('winston');
+require('winston-mongodb');
 const startupDebug = require('debug')('app:startup');
 const dbDebug = require('debug')('app:db');
 const morgan = require('morgan');
@@ -18,6 +19,10 @@ const app = express();
 const mongoose = require('mongoose');
 
 winston.add(new winston.transports.File({filename: 'logger.log'}));
+winston.add(new winston.transports.MongoDB({
+  db: 'mongodb://127.0.0.1:27017/vidly',
+  level: 'info'
+}))
 
 if (!config.get('jwtPrivateKey')) {
   console.error('FATAL ERROR: envitonment variable "jwtPrivateKey" is not defined.');

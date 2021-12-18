@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const winston = require('winston');
-// const dbDebug = require('debug')('app:db');
 
 module.exports = function () {
   mongoose

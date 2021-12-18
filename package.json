@@ -4,7 +4,7 @@
   "description": "vidly fictional video rental platform",
   "main": "index.js",
   "scripts": {
-    "start": "set app_password='12234' && set vidly_jwtPrivateKey= 'bkj5JEBsd' && nodemon index.js",
+    "start": "set vidly_jwtPrivateKey= 'bkj5JEBsd' && nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [

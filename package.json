@@ -4,8 +4,9 @@
   "description": "vidly fictional video rental platform",
   "main": "index.js",
   "scripts": {
-    "start": "set vidly_jwtPrivateKey= 'bkj5JEBsd' && nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "set vidly_jwtPrivateKey='bkj5JEBsd' && nodemon index.js",
+    "start-test": "set NODE_ENV=test&& set vidly_jwtPrivateKey='bkj5JEBsd' && nodemon index.js",
+    "test": "set NODE_ENV=test&& jest --verbose"
   },
   "keywords": [
     "video",
@@ -15,7 +16,7 @@
   "license": "MIT",
   "devDependencies": {
     "eslint": "^8.2.0",
-    "jest": "^27.3.1",
+    "jest": "^27.4.5",
     "supertest": "^6.1.6"
   },
   "dependencies": {

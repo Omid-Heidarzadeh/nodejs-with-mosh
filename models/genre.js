@@ -11,38 +11,37 @@ const genreSchema = new mongoose.Schema({
   }
 });
 
-const genreFields = ['id', 'name'];
-
 const Genre = mongoose.model('Genre', genreSchema);
 
 function validateRequest(request) {
-  const { method, body, query } = request;
-  const toBeValidated = method === 'GET' ? query : body;
+  const { method, body, query, params } = request;
+  const toValidate = method === 'GET'
+    ? (params.id
+      ? params : query)
+    : body;
   let schema = {
     id: Joi.string().length(24),
-    name: Joi.string().min(3).max(255).lowercase()
+    name: Joi.string().min(3).max(50).lowercase()
   };
 
-  if (method === 'DELETE' || method === 'PUT') {
-    schema.id = schema.id.required();
-  }
+  if (method === 'DELETE' || method === 'PUT') schema.id = schema.id.required();
 
-  if (method === 'POST' || method === 'PUT') {
+  if (method === 'POST' || method === 'PUT')
     schema.name = schema.name.required();
-  }
 
-  return Joi.object(schema).validate(toBeValidated);
+  return Joi.object(schema).validate(toValidate);
 }
 
-
 function generateQuery(req) {
-  let query = {};
-  for (let key in req.query) {
+  const query = {};
+  const genreFields = ['id', 'name'];
+  const requested = Object.keys(req.query).length ? req.query : req.params;
+  for (let key in requested) {
     if (
-      Object.prototype.hasOwnProperty.call(req.query, key) &&
+      Object.prototype.hasOwnProperty.call(requested, key) &&
       genreFields.includes(key)
     ) {
-      let value = req.query[key];
+      let value = requested[key];
       if (key === 'id') key = '_id';
       query[key] = value;
     }
@@ -50,4 +49,9 @@ function generateQuery(req) {
   return query;
 }
 
-module.exports = { Genre, genreSchema, generateQuery, validate: validateRequest };
+module.exports = {
+  Genre,
+  genreSchema,
+  generateQuery,
+  validate: validateRequest
+};

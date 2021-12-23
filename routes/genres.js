@@ -5,8 +5,8 @@ const auth = require('../middleware/auth');
 const admin = require('../middleware/admin');
 const asyncMiddleware = require('../middleware/async');
 
-router.get('/', asyncMiddleware(async (req, res) => {
-  if (!Object.keys(req.query).length) {
+router.get(['/','/:id'], asyncMiddleware(async (req, res) => {
+  if (!Object.keys(req.query).length && !req.params.id) {
     const genres = await Genre.find().select('_id name');
     res.status(200).send(genres);
   } else {
@@ -15,7 +15,7 @@ router.get('/', asyncMiddleware(async (req, res) => {
 
     let query = generateQuery(req);
     const genre = await Genre.find(query);
-    if (genre.length > 0) res.status(200).send(genre);
+    if (genre.length) res.status(200).send(genre[0]);
     else
       res
         .status(404)

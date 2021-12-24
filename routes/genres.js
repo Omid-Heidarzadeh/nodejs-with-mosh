@@ -72,10 +72,9 @@ router.delete(
   '/',
   [auth, admin],
   asyncMiddleware(async (req, res) => {
-    const { body } = req;
-    const { error } = validate(body);
+    const { error } = validate(req);
     if (error) return res.status(400).send(error.details[0].message);
-    const result = await Genre.findByIdAndDelete(body.id);
+    const result = await Genre.findByIdAndDelete(req.body.id);
     if (!result)
       return res
         .status(404)

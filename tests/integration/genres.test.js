@@ -209,5 +209,61 @@ describe('/api/genres', () => {
     });
   });
 
-  
+  describe('DELETE /', () => {
+    const name = 'genre';
+    let token;
+    let id;
+
+    const exec = () => {
+      return request(server)
+        .delete('/api/genres')
+        .set('x-auth-token', token)
+        .send({id});
+    };
+
+    beforeEach(async () => {
+      token = new User({ isAdmin: true }).genAuthToken();
+      id = new mongoose.Types.ObjectId();
+      let genre = new Genre({ _id: id, name: name });
+      await genre.save();
+    });
+
+    it('should return 401 if no token is provided', async () => {
+      token = '';
+
+      const res = await exec();
+
+      expect(res.status).toBe(401);
+    });
+
+    it('should return 403 if user is not admin', async () => {
+      token = new User({ isAdmin: false }).genAuthToken();
+
+      const res = await exec();
+
+      expect(res.status).toBe(403);
+    });
+
+    it.each(['', 'a', '1'])('should return 400 if provided id is invalid', async (arg) => {
+      id = arg;
+      const res = await exec();
+
+      expect(res.status).toBe(400);
+    });
+
+    it('should return 404 if requested id is not found', async () => {
+      id = new mongoose.Types.ObjectId().toHexString();
+
+      const res = await exec();
+
+      expect(res.status).toBe(404);
+    });
+
+    it('should delete valid requested genre and return it', async () => {
+      const res = await exec();
+
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({ _id: id, name: name });
+    });
+  });
 });

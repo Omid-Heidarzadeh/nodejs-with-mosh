@@ -6,7 +6,7 @@
   "scripts": {
     "start": "set vidly_jwtPrivateKey='bkj5JEBsd' && nodemon index.js",
     "start-test": "set NODE_ENV=test&& set vidly_jwtPrivateKey='bkj5JEBsd' && nodemon index.js",
-    "test": "set NODE_ENV=test&& set PORT=2000&& jest --watchAll --verbose --detectOpenHandles"
+    "test": "set NODE_ENV=test&& set PORT=2000&& jest --watchAll --verbose --coverage --detectOpenHandles"
   },
   "keywords": [
     "video",

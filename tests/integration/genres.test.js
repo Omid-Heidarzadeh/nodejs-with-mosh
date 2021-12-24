@@ -31,14 +31,6 @@ describe('/api/genres', () => {
   });
 
   describe('GET /:id', () => {
-    beforeEach(() => {
-      server = require('../../index');
-    });
-    afterEach(async () => {
-      server.close();
-      await Genre.deleteMany({});
-    });
-
     it('should return requested genre by ID', async () => {
       const id = new mongoose.Types.ObjectId();
       await Genre.collection.insertOne({ _id: id, name: 'genre1' });
@@ -67,7 +59,7 @@ describe('/api/genres', () => {
       expect(result.body).toMatchObject({ _id: genre._id, name: genre.name });
     });
 
-    test.each([
+    it.each([
       '?id=',
       '?id=12345',
       '?name=',
@@ -101,7 +93,7 @@ describe('/api/genres', () => {
       name = 'genre1';
     });
 
-    test('should return 401 if the client does not logged in', async () => {
+    it('should return 401 if the client does not logged in', async () => {
       token = '';
 
       const res = await exec();
@@ -109,14 +101,14 @@ describe('/api/genres', () => {
       expect(res.status).toBe(401);
     });
 
-    test('should return 403 if the user is not admin', async () => {
+    it('should return 403 if the user is not admin', async () => {
       token = new User({ isAdmin: false }).genAuthToken();
       const res = await exec();
 
       expect(res.status).toBe(403);
     });
 
-    test('should return 400 if the name is less than 3 characters', async () => {
+    it('should return 400 if the name is less than 3 characters', async () => {
       name = 'ab';
 
       const res = await exec();
@@ -124,7 +116,7 @@ describe('/api/genres', () => {
       expect(res.status).toBe(400);
     });
 
-    test('should return 400 if the name is more than 50 characters', async () => {
+    it('should return 400 if the name is more than 50 characters', async () => {
       name = new Array(52).join('a');
 
       const res = await exec();
@@ -132,7 +124,7 @@ describe('/api/genres', () => {
       expect(res.status).toBe(400);
     });
 
-    test('should save the genre if it is valid', async () => {
+    it('should save the genre if it is valid', async () => {
       await exec();
 
       const genre = await Genre.findOne({ name: 'genre1' });
@@ -141,11 +133,81 @@ describe('/api/genres', () => {
       expect(genre).toMatchObject({ name: 'genre1' });
     });
 
-    test('should return the genre if it is valid', async () => {
+    it('should return the genre if it is valid', async () => {
       const res = await exec();
 
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({ _id: /^[a-z0-9]{24}$/, name: 'genre1' });
     });
   });
+
+  describe('PUT /', () => {
+    let token;
+    let id;
+    let name;
+
+    const exec = () => {
+      return request(server)
+        .put('/api/genres')
+        .set('x-auth-token', token)
+        .send({ id, name });
+    };
+
+    beforeEach(async () => {
+      id = new mongoose.Types.ObjectId();
+      name = 'new Genre';
+      token = new User({ isAdmin: true }).genAuthToken();
+      let genre = new Genre({ _id: id, name: 'old genre' });
+      await genre.save();
+    });
+
+    it('should return 401 if no token is provided', async () => {
+      token = '';
+
+      const res = await exec();
+
+      expect(res.status).toBe(401);
+    });
+
+    it('should return 403 if user is not admin', async () => {
+      token = new User({ isAdmin: false }).genAuthToken();
+
+      const res = await exec();
+
+      expect(res.status).toBe(403);
+    });
+
+    it.each([
+      ['invalidID', 'validName'],
+      [mongoose.Types.ObjectId(), 'a'],
+      ['', 'validName'],
+      [mongoose.Types.ObjectId(), '']
+    ])('should return 400 if request is invalid', async (a, b) => {
+      id = a;
+      name = b;
+
+      const res = await exec();
+
+      expect(res.status).toBe(400);
+    });
+
+    it('should return 404 if requested genre does not exist', async () => {
+      id = new mongoose.Types.ObjectId();
+
+      const res = await exec();
+
+      expect(res.status).toBe(404);
+    });
+
+    it('should update genre if requested genre is valid', async () => {
+      name = 'new genre';
+
+      const res = await exec();
+
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({ _id: id, name: name });
+    });
+  });
+
+  
 });

@@ -15,12 +15,15 @@ const Genre = mongoose.model('Genre', genreSchema);
 
 function validateRequest(request) {
   const { method, body, query, params } = request;
-  const toValidate = method === 'GET'
-    ? (params.id
-      ? params : query)
-    : body;
+  const toValidate = method === 'GET' ? (params.id ? params : query) : body;
   let schema = {
-    id: Joi.string().length(24),
+    id: Joi.string()
+      .length(24)
+      .custom((value, helpers) => {
+        if (!mongoose.Types.ObjectId.isValid(value))
+          return helpers.error('any.invalid');
+        return value;
+      }, 'custom validation for id'),
     name: Joi.string().min(3).max(50).lowercase()
   };
 

@@ -21,7 +21,7 @@ function validateRequest(request) {
       .length(24)
       .custom((value, helpers) => {
         if (!mongoose.Types.ObjectId.isValid(value))
-          return helpers.error('any.invalid');
+          return helpers.message('Provided id is invalid');
         return value;
       }, 'custom validation for id'),
     name: Joi.string().min(3).max(50).lowercase()

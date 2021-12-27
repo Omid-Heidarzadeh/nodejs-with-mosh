@@ -6,122 +6,139 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const asyncMiddleware = require('../middleware/async');
 
-router.get('/', auth, asyncMiddleware(async (req, res) => {
-  if (!Object.keys(req.query).length) {
-    let rentals = await Rental.find();
-    return res.send(rentals);
-  }
-
-  let { error } = validate(req);
-  if (error) return res.status(400).send(error.details[0].message);
-
-  let { id, customerId, movieTitles, from, to } = req.query;
-
-  const filters = [];
-  id && filters.push({ _id: id });
-  customerId && filters.push({ 'customer._id': customerId });
-  movieTitles &&
-    filters.push({
-      $where: `for(let {_id, title} of this.movies) 
-    { if ("${movieTitles}".toLowerCase().includes(title.toLowerCase())) return true }`
-    });
-  from &&
-    filters.push({
-      date: {
-        $gte: from
-      }
-    });
-  to && filters.push({
-    date: {
-      $lte: to
+router.get(
+  '/',
+  auth,
+  asyncMiddleware(async (req, res) => {
+    if (!Object.keys(req.query).length) {
+      let rentals = await Rental.find();
+      return res.send(rentals);
     }
+    
+    let { id, customerId, movieTitles, from, to } = req.query;
+    if (from) from = req.query.from = getDate(from);
+    if (to) to = req.query.to = getDate(to);
+
+    let { error } = validate(req);
+    if (error) return res.status(400).send(error.details[0].message);
+
+    const filters = [];
+    id && filters.push({ _id: id });
+    customerId && filters.push({ 'customer._id': customerId });
+    movieTitles &&
+      filters.push({
+        $where: `for (let {_id, title} of this.movies) 
+    { if ("${movieTitles}".toLowerCase().includes(title.toLowerCase())) return true }`
+      });
+
+    from &&
+      filters.push({
+        dateOut: {
+          $gte: from
+        }
+      });
+
+    to &&
+      filters.push({
+        dateOut: {
+          $lte: to
+        }
+      });
+
+    const rentals = await Rental.find()
+      .and(filters)
+      .catch((error) => {
+        return { error };
+      });
+
+    if (rentals.error)
+      return res
+        .status(400)
+        .send(`Somthing goes wrong: ${rentals.error.message}`);
+
+    res.send(rentals);
   })
-
-  if (!from) from = new Date('2020-01-01T00:00:00Z');
-  from = getDate(from);
-  if (!to) to = Date.now();
-  to = getDate(to);
-
-  console.log(filters);
-  const rentals = await Rental.find()
-    .and(filters)
-    .catch((error) => {
-      return { error };
-    });
-
-  if (rentals.error)
-    return res
-      .status(400)
-      .send(`Somthing goes wrong: ${rentals.error.message}`);
-
-  res.send(rentals);
-}));
+);
 
 function getDate(input) {
   let pattern = /^\d{4}-\d{1,2}-\d{1,2}/g;
+  let result;
   if (pattern.test(input)) {
-    return new Date(input).getTime();
-  } else if (!isNaN(Number(input))) {
-    return new Date(Number(input)).getTime();
-  } else return null;
+    try {
+      result = new Date(input).toISOString();
+    } catch (error) {
+      result = undefined;
+    }
+  } else if (Number.isSafeInteger(Number(input))) {
+    try {
+      result = new Date(Number(input)).toISOString();
+    } catch (error) {
+      result = undefined;
+    }
+  }
+  return result;
 }
 
-router.post('/', auth, asyncMiddleware(async (req, res) => {
-  let { error } = validate(req);
-  if (error) return res.status(400).send(error.details[0].message);
+router.post(
+  '/',
+  auth,
+  asyncMiddleware(async (req, res) => {
+    let { error } = validate(req);
+    if (error) return res.status(400).send(error.details[0].message);
 
-  let { customerId, movieTitles, date } = req.body;
+    let { customerId, movieTitles, date } = req.body;
 
-  let customer = await Customer.findById(customerId).select('_id name');
-  if (!customer)
-    return res
-      .status(400)
-      .send(`Provided customer ID "${customerId}" is not valid.`);
+    let customer = await Customer.findById(customerId).select('_id name');
+    if (!customer)
+      return res
+        .status(400)
+        .send(`Provided customer ID "${customerId}" is not valid.`);
 
-  let movies = await Movie.find({ _id: movieTitles });
-  if (!movies.length)
-    return res
-      .status(400)
-      .send(`Could not find movies with provided IDs: ${movieTitles}`);
+    let movies = await Movie.find({ _id: movieTitles });
+    if (!movies.length)
+      return res
+        .status(400)
+        .send(`Could not find movies with provided IDs: ${movieTitles}`);
 
-  const outOfStockMovies = checkMoviesStock(movies);
-  if (outOfStockMovies.length > 0)
-    return res
-      .status(400)
-      .send(
-        `Out of stock ${
-          outOfStockMovies.length > 1 ? 'movies' : 'movie'
-        }: "${outOfStockMovies.join(', ')}"`
-      );
+    const outOfStockMovies = checkMoviesStock(movies);
+    if (outOfStockMovies.length > 0)
+      return res
+        .status(400)
+        .send(
+          `Out of stock ${
+            outOfStockMovies.length > 1 ? 'movies' : 'movie'
+          }: "${outOfStockMovies.join(', ')}"`
+        );
 
-  movies = movies.map((m) => {
-    return { _id: m._id, title: m.title };
-  });
-
-  let rental = new Rental({
-    customer,
-    movies,
-    date: date || Date.now()
-  });
-
-  let result = await rental
-    .save()
-    .then(async (saved) => {
-      const { error, status } = await updateMoviesStock(movies);
-      if (error) return { error, status };
-      return saved;
-    })
-    .catch((error) => {
-      return { error };
+    movies = movies.map((m) => {
+      return { _id: m._id, title: m.title };
     });
 
-  if (result.error) {
-    await rental.remove();
-    return res.status(result.status || 500).send(result.error.message);
-  }
+    let rental = new Rental({
+      customer,
+      movies,
+      date: date || Date.now()
+    });
 
-  res.send(result);
-}));
+    let result = await rental
+      .save()
+      .then(async (saved) => {
+        const { error, status } = await updateMoviesStock(movies);
+        if (error) return { error, status };
+        return saved;
+      })
+      .catch((error) => {
+        return { error };
+      });
+
+    if (result.error) {
+      await rental.remove();
+      return res.status(result.status || 500).send(result.error.message);
+    }
+
+    res.send(result);
+  })
+);
 
 function checkMoviesStock(movies) {
   let outOfStock = [];

@@ -3,6 +3,7 @@ const request = require('supertest');
 const mongoose = require('mongoose');
 const { User } = require('../../models/user');
 const { Movie } = require('../../models/movie');
+const { Genre } = require('../../models/genre');
 const { Customer } = require('../../models/customer');
 const { Rental } = require('../../models/rental');
 const config = require('config');
@@ -16,11 +17,12 @@ describe('/api/rentals', () => {
   });
 
   afterEach(async () => {
-    server.close();
     await Rental.deleteMany({});
     await Customer.deleteMany({});
     await Movie.deleteMany({});
+    await Genre.deleteMany({});
     mongoose.connection.close();
+    server.close();
   });
 
   describe('GET /', () => {
@@ -41,9 +43,9 @@ describe('/api/rentals', () => {
       token = new User().genAuthToken();
       customer = new Customer({ name: 'customer1', phone: '12345' });
       await customer.save();
-      movie1 = new Movie({ title: 'first movie'});
+      movie1 = new Movie({ title: 'first movie' });
       await movie1.save();
-      movie2 = new Movie({ title: 'second movie'});
+      movie2 = new Movie({ title: 'second movie' });
       await movie2.save();
 
       rental = new Rental({
@@ -116,9 +118,8 @@ describe('/api/rentals', () => {
         expect(res.status).toBe(400);
       }
     });
-    
-    it('should return requested rental if query is valid', async () => {
 
+    it('should return requested rental if query is valid', async () => {
       let validQueries = [
         ['id', rental._id],
         ['customerId', customer._id],
@@ -150,6 +151,136 @@ describe('/api/rentals', () => {
         expect(res.body[0]).toMatchObject(rental);
       }
     });
+  });
 
+  describe('POST /', () => {
+    let token;
+    let rental;
+    let customer;
+    let movie1;
+    let movie2;
+
+    const exec = () => {
+      return request(server)
+        .post('/api/rentals')
+        .set('x-auth-token', token)
+        .send(rental);
+    };
+
+    beforeEach(async () => {
+      token = new User({ isAdmin: true }).genAuthToken();
+      customer = new Customer({
+        name: 'customer',
+        phone: '12345'
+      });
+      await customer.save();
+
+      movie1 = new Movie({
+        title: 'Home Alone',
+        genre: ['comedy'],
+        numberInStock: 1
+      });
+      await movie1.save();
+
+      movie2 = new Movie({
+        title: 'Terminator',
+        genre: ['action'],
+        numberInStock: 1
+      });
+      await movie2.save();
+
+      rental = {
+        customerId: customer._id,
+        moviesTitles: [movie1.title, movie2.title]
+      };
+    });
+
+    it('should return 401 if not token is provided', async () => {
+      token = '';
+
+      const res = await exec();
+
+      expect(res.status).toBe(401);
+    });
+
+    it('should return 400 if request is invalid', async () => {
+      let invalidQueries = [
+        {
+          customerId: 'invalidID',
+          movieTitles: `${movie1.title}, ${movie2.title}`
+        },
+        {
+          customerId: new mongoose.Types.ObjectId().toHexString(),
+          movieTitles: `${movie1.title}, ${movie2.title}`
+        },
+        {
+          customerId: customer._id,
+          movieTitles: [movie1.title, 'invalidMovieTitle1']
+        },
+        {
+          customerId: customer._id,
+          movieTitles: `${movie1.title}, invalidMovieTitle2`
+        },
+        {
+          customerId: customer._id,
+          movieTitles: ['invalidMovieTitle1', 'invalidMovieTitle2']
+        }
+      ];
+
+      for (let query of invalidQueries) {
+        rental = query;
+        const res = await exec();
+
+        expect(res.status).toBe(400);
+      }
+    });
+
+    it('should return 400 if requested movies are out of stock', async () => {
+      await Movie.findByIdAndUpdate(movie1._id, {
+        $inc: { numberInStock: -1 }
+      });
+      await Movie.findByIdAndUpdate(movie2._id, {
+        $inc: { numberInStock: -1 }
+      });
+      let invalidQueries = [
+        {
+          customerId: customer._id,
+          movieTitles: movie1.title
+        },
+        {
+          customerId: customer._id,
+          movieTitles: movie2.title
+        },
+        {
+          customerId: customer._id,
+          movieTitles: [movie1.title, movie2.title]
+        }
+      ];
+
+      for (let query of invalidQueries) {
+        rental = query;
+        const res = await exec();
+
+        expect(res.status).toBe(400);
+      }
+    });
+
+    it('should return 400 if transaction failed', async () => {
+      rental = {
+        customerId: customer._id,
+        movieTitles: [movie1.title, movie2.title]
+      };
+
+      let res = await Promise.allSettled([
+        exec(),
+        Movie.findByIdAndUpdate(movie1._id, { $inc: { numberInStock: -1 } })
+      ]);
+
+      let stock = await Movie.findById(movie1._id);
+      rental = await Rental.find();
+      expect(res[0].value.status).toBe(400);
+      expect(stock).toHaveProperty('numberInStock', 0);
+      expect(rental.length).toBe(0);
+    });
   });
 });

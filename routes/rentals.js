@@ -14,7 +14,7 @@ router.get(
       let rentals = await Rental.find();
       return res.send(rentals);
     }
-    
+
     let { id, customerId, movieTitles, from, to } = req.query;
     if (from) from = req.query.from = getDate(from);
     if (to) to = req.query.to = getDate(to);
@@ -94,13 +94,22 @@ router.post(
         .status(400)
         .send(`Provided customer ID "${customerId}" is not valid.`);
 
-    let movies = await Movie.find({ _id: movieTitles });
-    if (!movies.length)
+    let movies = [];
+    let invalidTitles = [];
+    if (!Array.isArray(movieTitles)) movieTitles = movieTitles.split(',');
+    for (let title of movieTitles) {
+      title = title.trim();
+      let movie = await Movie.find({ title });
+      if (!movie.length) invalidTitles.push(title);
+      else movies.push(...movie);
+    }
+
+    if (invalidTitles.length)
       return res
         .status(400)
-        .send(`Could not find movies with provided IDs: ${movieTitles}`);
+        .send(`Invalid movie titles: ${invalidTitles.join(', ')}`);
 
-    const outOfStockMovies = checkMoviesStock(movies);
+    const outOfStockMovies = findOutOfStockMovies(movies);
     if (outOfStockMovies.length > 0)
       return res
         .status(400)
@@ -117,7 +126,7 @@ router.post(
     let rental = new Rental({
       customer,
       movies,
-      date: date || Date.now()
+      dateOut: date || Date.now()
     });
 
     let result = await rental
@@ -140,7 +149,7 @@ router.post(
   })
 );
 
-function checkMoviesStock(movies) {
+function findOutOfStockMovies(movies) {
   let outOfStock = [];
   for (let movie of movies) {
     if (movie.numberInStock === 0) outOfStock.push(movie.title);

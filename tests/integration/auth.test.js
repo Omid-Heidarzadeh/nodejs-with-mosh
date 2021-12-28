@@ -7,6 +7,7 @@ const config = require('config');
 
 describe('Auth middleware', () => {
   let token = new User().genAuthToken();
+  let server;
 
   const exec = () => {
     return request(server)

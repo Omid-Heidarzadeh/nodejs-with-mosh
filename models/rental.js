@@ -66,7 +66,7 @@ function validateRequest(request) {
   const schema = {
     id: Joi.string().custom(isValidId),
     customerId: Joi.string().custom(isValidId),
-    movieTitles: Joi.custom(checkMovieTitles, 'movieTitles custom validation'),
+    movieTitles: Joi.custom(checkMovieTitles),
     dateOut: Joi.date().min(new Date('2021-10-01')).custom(validateDate),
     from: Joi.date().min(new Date('2021-10-01')).custom(validateDate),
     to: Joi.date().min(new Date('2021-10-01')).custom(validateDate)

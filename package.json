@@ -6,7 +6,8 @@
   "scripts": {
     "start": "set vidly_jwtPrivateKey='bkj5JEBsd' && nodemon index.js",
     "start-test": "set NODE_ENV=test&& set vidly_jwtPrivateKey='bkj5JEBsd' && nodemon index.js",
-    "test": "set NODE_ENV=test&& jest --verbose --runInBand --watchAll"
+    "test": "set NODE_ENV=test&& jest --verbose --runInBand --watchAll --forceExit",
+    "jest-plugin": "set NODE_ENV=test&& jest --verbose --runInBand --forceExit"
   },
   "keywords": [
     "video",
